@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Image Upload and Capture</title>
+  </head>
+  <body>
+    <h1>Image Upload and Capture</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+      <input type="file" name="image" id="image-input" accept="image/*" />
+      <input type="button" value="Upload" onclick="uploadImage()" />
+    </form>
+
+    <h2>OR</h2>
+
+    <h3>Camera Capture</h3>
+    <video id="video" width="400" height="300" autoplay></video>
+    <button id="capture-button" onclick="captureImage()">Capture</button>
+
+    <h2>Response:</h2>
+    <pre id="response-container"></pre>
+
+    <!-- Display the uploaded/captured image -->
+    <h2>Image:</h2>
+    <img id="image-display" src="" alt="Uploaded/Captured Image" />
+
+    <h2>Time:</h2>
+    <p id="time-display"></p>
+
+    <script>
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then(function (stream) {
+          var videoElement = document.getElementById("video");
+          videoElement.srcObject = stream;
+        })
+        .catch(function (error) {
+          console.error("Error accessing the camera: ", error);
+        });
+
+      function uploadImage() {
+        var formData = new FormData();
+        var imageInput = document.getElementById("image-input");
+        var imageFile = imageInput.files[0];
+        formData.append("image", imageFile);
+
+        // Start the timer
+        var startTime = performance.now();
+
+        sendImage(formData, startTime);
+      }
+
+      function captureImage() {
+        var videoElement = document.getElementById("video");
+        var canvas = document.createElement("canvas");
+        var context = canvas.getContext("2d");
+
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+
+        context.drawImage(
+          videoElement,
+          0,
+          0,
+          videoElement.videoWidth,
+          videoElement.videoHeight
+        );
+
+        canvas.toBlob(function (blob) {
+          var formData = new FormData();
+          formData.append("image", blob, "image.jpg");
+
+          // Start the timer
+          var startTime = performance.now();
+
+          sendImage(formData, startTime);
+        }, "image/jpeg");
+      }
+
+      function sendImage(formData, startTime) {
+        var xhr = new XMLHttpRequest();
+
+        xhr.open("POST", "/api/image_to_au", true);
+        xhr.responseType = "json";
+
+        xhr.onload = function () {
+          if (xhr.status === 200) {
+            var response = xhr.response;
+            document.getElementById("response-container").textContent =
+              JSON.stringify(response, null, 2);
+
+            // Display the uploaded/captured image
+            var imageUrl = URL.createObjectURL(formData.get("image"));
+            document.getElementById("image-display").src = imageUrl;
+
+            // Calculate the elapsed time
+            var endTime = performance.now();
+            var elapsedTime = endTime - startTime;
+
+            // Display the elapsed time
+            document.getElementById("time-display").textContent =
+              "Time elapsed: " + elapsedTime.toFixed(2) + " milliseconds";
+          } else {
+            console.error("Request failed. Status:", xhr.status);
+          }
+        };
+
+        xhr.send(formData);
+      }
+    </script>
+  </body>
+</html>
