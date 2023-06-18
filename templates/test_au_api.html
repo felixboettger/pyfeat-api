@@ -2,30 +2,59 @@
 <html>
   <head>
     <title>Image Upload and Capture</title>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
   </head>
   <body>
-    <h1>Image Upload and Capture</h1>
-    <form id="upload-form" enctype="multipart/form-data">
-      <input type="file" name="image" id="image-input" accept="image/*" />
-      <input type="button" value="Upload" onclick="uploadImage()" />
-    </form>
+    <div class="container mt-5">
+      <h1 class="mb-4">Image Upload and Capture</h1>
+      <form id="upload-form" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="image-input">Select Image:</label>
+          <input
+            type="file"
+            name="image"
+            id="image-input"
+            accept="image/*"
+            class="form-control-file"
+          />
+        </div>
+        <button type="button" class="btn btn-primary" onclick="uploadImage()">
+          Upload
+        </button>
+      </form>
 
-    <h2>OR</h2>
+      <h2 class="mt-5">OR</h2>
 
-    <h3>Camera Capture</h3>
-    <video id="video" width="400" height="300" autoplay></video>
-    <button id="capture-button" onclick="captureImage()">Capture</button>
+      <h3 class="mt-4">Camera Capture</h3>
+      <video id="video" width="400" height="300" autoplay></video>
+      <button
+        id="capture-button"
+        onclick="captureImage()"
+        class="btn btn-primary mt-3"
+      >
+        Capture
+      </button>
 
-    <h2>Response:</h2>
-    <pre id="response-container"></pre>
+      <h2 class="mt-5">Response:</h2>
+      <pre id="response-container"></pre>
 
-    <!-- Display the uploaded/captured image -->
-    <h2>Image:</h2>
-    <img id="image-display" src="" alt="Uploaded/Captured Image" />
+      <!-- Display the uploaded/captured image -->
+      <h2 class="mt-5">Image:</h2>
+      <img
+        id="image-display"
+        src=""
+        alt="Uploaded/Captured Image"
+        class="img-fluid"
+      />
 
-    <h2>Time:</h2>
-    <p id="time-display"></p>
+      <h2 class="mt-5">Time:</h2>
+      <p id="time-display"></p>
+    </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
       navigator.mediaDevices
         .getUserMedia({ video: true })
@@ -77,16 +106,12 @@
       }
 
       function sendImage(formData, startTime) {
-        var xhr = new XMLHttpRequest();
-
-        xhr.open("POST", "/api/image_to_au", true);
-        xhr.responseType = "json";
-
-        xhr.onload = function () {
-          if (xhr.status === 200) {
-            var response = xhr.response;
+        axios
+          .post("/api/image_to_au", formData)
+          .then(function (response) {
+            var data = response.data;
             document.getElementById("response-container").textContent =
-              JSON.stringify(response, null, 2);
+              JSON.stringify(data, null, 2);
 
             // Display the uploaded/captured image
             var imageUrl = URL.createObjectURL(formData.get("image"));
@@ -99,12 +124,10 @@
             // Display the elapsed time
             document.getElementById("time-display").textContent =
               "Time elapsed: " + elapsedTime.toFixed(2) + " milliseconds";
-          } else {
-            console.error("Request failed. Status:", xhr.status);
-          }
-        };
-
-        xhr.send(formData);
+          })
+          .catch(function (error) {
+            console.error("Request failed:", error);
+          });
       }
     </script>
   </body>
